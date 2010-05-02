@@ -34,9 +34,16 @@
 			if (empty($this->id) && !empty($Model->data[$Model->alias])) {
 				extract($this->settings[$Model->alias]);
 				$data = &$Model->data[$Model->alias];
-				$password = $this->generateSaltedPassword($data[$password], $data[$field]);
+				if (empty($data[$field])) {
+					$data[$field] = $this->generateSaltString();
+				}
+				$data[$password] = $this->generateSaltedPassword($data[$password], $data[$field]);
 			}
 			return parent::beforeSave(&$Model);
+		}
+
+		function generateSaltString() {
+			return Security::hash(String::uuid(), null, true);
 		}
 
 		function generateSaltedPassword($password = '', $saltString) {
@@ -80,7 +87,7 @@
 			if (isset($data[$alias]['password'])) {
 				extract($this->settings[$alias]);
 				$Model->data = $data;
-				$Model->data[$alias][$field] = Security::hash(String::uuid(), null, true);
+				$Model->data[$alias][$field] = Security::hash($this->generateSaltString(), null, true);
 				$Model->data[$alias][$password] = Security::hash($data[$alias][$password], null, true);
 				return $Model->data;
 			}
