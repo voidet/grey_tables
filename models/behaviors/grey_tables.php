@@ -13,7 +13,7 @@
 				$this->settings[$Model->alias] = $default;
 			}
 
-			$this->settings[$Model->alias] = array_merge($this->settings[$Model->alias], ife(is_array($settings), $settings, array()));
+			$this->settings[$Model->alias] = array_merge($this->settings[$Model->alias], $settings);
 		}
 
 		function beforeFind(&$Model, $queryData) {
