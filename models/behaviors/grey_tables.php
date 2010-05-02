@@ -3,7 +3,11 @@
 	class GreyTablesBehavior extends ModelBehavior {
 		
 		function setup(&$model, $settings = array()) {
-			$default = array('field' => 'salt');
+			$default = array(
+				'field' => 'salt',
+				'username' => 'username',
+				'password' => 'password'
+			);
 
 			if (!isset($this->settings[$model->name])) {
 				$this->settings[$model->name] = $default;
@@ -13,7 +17,7 @@
 		}
 		
 		function beforeFind(&$model, $queryData) {
-			if(!empty($queryData['conditions'][$model->name.'.password']) && !empty($queryData['conditions'][$model->name.'.username'])) {
+			if(!empty($queryData['conditions'][$model->name.'.'.$this->settings[$model->name]['password']]) && !empty($queryData['conditions'][$model->name.'.'.$this->settings[$model->name]['username']]) && (empty($queryData['conditions']['avoidRecursion']) || $queryData['conditions']['avoidRecursion'] !== true)) {
 				$user_id = $this->findSaltedUser($model, $queryData['conditions']);
 				if (!empty($user_id)) {
 					unset($queryData['conditions']);
@@ -26,7 +30,7 @@
 		function beforeSave(&$model) {
 			if (empty($this->id) && !empty($model->data[$model->name])) {
 				$data = &$model->data[$model->name];
-				$data['password'] = $this->generateSaltedPassword($data['password'], $data[$this->settings[$model->name]['field']]);
+				$data[$this->settings[$model->name]['password']] = $this->generateSaltedPassword($data[$this->settings[$model->name]['password']], $data[$this->settings[$model->name]['field']]);
 			}
 			return parent::beforeSave(&$model);
 		}
@@ -39,10 +43,19 @@
 		
 		function findSaltedUser(&$model, $fields = array()) {
 			if (!empty($fields)) {
-				$user_id = $model->query('SELECT `'.$model->name.'`.`id` as \'id\' FROM '.$model->table.' as '.$model->name.' WHERE `'.$model->name.'`.`username` = \''.$fields[$model->name.'.username'].'\' AND `'.$model->name.'`.`password` = SHA1(CONCAT(\''.$fields[$model->name.'.password'].'\', `'.$this->settings[$model->name]['field'].'`)) LIMIT 1');
+
+				$db =& $model->getDataSource();
+				$saltQuery = $db->expression(sprintf(
+					'`'.$model->name.'`.%s = SHA1(CONCAT(%s, `%s`))', $db->name($this->settings[$model->name]['password']),
+					$db->value($fields[$model->name.'.'.$this->settings[$model->name]['password']]),
+					addslashes($this->settings[$model->name]['field'])
+				));
+				
+				$user_id = $model->find('first', array('conditions' => array($model->name.'.'.$this->settings[$model->name][$this->settings[$model->name]['username']] => $fields[$model->name.'.'.$this->settings[$model->name][$this->settings[$model->name]['username']]], $saltQuery), 'fields' => array('id'), 'recursive' => -1, 'avoidRecursion' => true));
+
 				if (!empty($user_id)) {
-					$fields[$model->name.'.id'] = $user_id[0][$model->name]['id'];
-					unset($fields[$model->name.'.password'], $fields[$model->name.'.username']);
+					$fields[$model->name.'.id'] = $user_id[$model->name]['id'];
+					unset($fields[$model->name.'.'.$this->settings[$model->name]['password']], $fields[$model->name.'.'.$this->settings[$model->name]['username']]);
 				}
 			}
 			return $fields;
@@ -52,7 +65,7 @@
 			if (isset($data[$alias]['password'])) {
 				$model->data = $data;
 				$model->data[$alias][$this->settings[$alias]['field']] = Security::hash(String::uuid(), null, true);
-				$model->data[$alias]['password'] = Security::hash($data[$alias]['password'], null, true);
+				$model->data[$alias][$this->settings[$model->name]['password']] = Security::hash($data[$alias][$this->settings[$model->name]['password']], null, true);
 				return $model->data;
 			}
 			return $data;
