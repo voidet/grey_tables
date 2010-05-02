@@ -18,7 +18,9 @@
 
 		function beforeFind(&$Model, $queryData) {
 			extract($this->settings[$Model->alias]);
-			if(!empty($queryData['conditions'][$Model->alias.'.'.$password]) && !empty($queryData['conditions'][$Model->alias.'.'.$username]) && (empty($queryData['conditions']['avoidRecursion']) || $queryData['conditions']['avoidRecursion'] !== true)) {
+			if(!empty($queryData['conditions'][$Model->alias.'.'.$password]) &&
+			   !empty($queryData['conditions'][$Model->alias.'.'.$username]) &&
+			   (empty($queryData['conditions']['avoidRecursion']) || $queryData['conditions']['avoidRecursion'] !== true)) {
 				$user_id = $this->findSaltedUser($Model, $queryData['conditions']);
 				if (!empty($user_id)) {
 					unset($queryData['conditions']);
