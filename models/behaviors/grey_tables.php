@@ -18,9 +18,9 @@
 
 		function beforeFind(&$Model, $queryData) {
 			extract($this->settings[$Model->alias]);
-			if(!empty($queryData['conditions'][$Model->alias.'.'.$password]) &&
+			if (!empty($queryData['conditions'][$Model->alias.'.'.$password]) &&
 			   !empty($queryData['conditions'][$Model->alias.'.'.$username]) &&
-			   (empty($queryData['conditions']['avoidRecursion']) || $queryData['conditions']['avoidRecursion'] !== true)) {
+			   (empty($queryData['avoidRecursion']) || $queryData['avoidRecursion'] !== true)) {
 				$user_id = $this->findSaltedUser($Model, $queryData['conditions']);
 				if (!empty($user_id)) {
 					unset($queryData['conditions']);
@@ -50,16 +50,15 @@
 				extract($this->settings[$Model->alias]);
 
 				$db =& $Model->getDataSource();
-				$passwordField
 				$passwordExpression = $db->expression(sprintf('SHA1(CONCAT(%s, %s))',
-					$db->name($password),
-					$db->name($field),
+					$db->value($fields[$Model->alias.'.'.$password]),
+					$db->name($field)
 				));
 
 				$user_id = $Model->find('first', array(
 						'conditions' => array(
 							$Model->alias.'.'.$username => $fields[$Model->alias.'.'.$username],
-							$Model->alias.'.'.$password = $passwordExpression
+							$Model->alias.'.'.$password => $passwordExpression
 						),
 						'fields' => array(
 							'id'
@@ -71,7 +70,7 @@
 
 				if (!empty($user_id)) {
 					$fields[$Model->alias.'.id'] = $user_id[$Model->alias]['id'];
-					unset($fields[$Model->alias.'.'.$password, $fields[$Model->alias.'.'.$username]);
+					unset($fields[$Model->alias.'.'.$password], $fields[$Model->alias.'.'.$username]);
 				}
 			}
 			return $fields;
@@ -79,7 +78,7 @@
 
 		function hashPasswords(&$data, $alias) {
 			if (isset($data[$alias]['password'])) {
-				extract($this->settings[$Model->alias]);
+				extract($this->settings[$alias]);
 				$Model->data = $data;
 				$Model->data[$alias][$field] = Security::hash(String::uuid(), null, true);
 				$Model->data[$alias][$password] = Security::hash($data[$alias][$password], null, true);
