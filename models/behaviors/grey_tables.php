@@ -39,7 +39,7 @@
 				}
 				$data[$password] = $this->generateSaltedPassword($data[$password], $data[$field]);
 			}
-			return parent::beforeSave(&$Model);
+			return parent::beforeSave($Model);
 		}
 
 		function generateSaltString() {
