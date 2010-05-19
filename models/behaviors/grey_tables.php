@@ -31,9 +31,9 @@
 		}
 
 		function beforeSave(&$Model) {
-			if (empty($this->id) && !empty($Model->data[$Model->alias])) {
-				extract($this->settings[$Model->alias]);
-				$data = &$Model->data[$Model->alias];
+			$data = &$Model->data[$Model->alias];
+			extract($this->settings[$Model->alias]);
+			if (empty($this->id) && !empty($data[$password])) {
 				if (empty($data[$field])) {
 					$data[$field] = $this->generateSaltString();
 				}
@@ -84,8 +84,8 @@
 		}
 
 		function hashPasswords(&$data, $alias) {
-			if (isset($data[$alias]['password'])) {
-				extract($this->settings[$alias]);
+			extract($this->settings[$alias]);
+			if (isset($data[$alias][$password])) {
 				$Model->data = $data;
 				$Model->data[$alias][$field] = Security::hash($this->generateSaltString(), null, true);
 				$Model->data[$alias][$password] = Security::hash($data[$alias][$password], null, true);
