@@ -52,35 +52,38 @@
 			}
 		}
 
-		function findSaltedUser(&$Model, $fields = array()) {
-			if (!empty($fields)) {
+		function testSaltedUser($password = '', $saltString = '', $dbPassword = '') {
+			$saltedPassword = $this->generateSaltedPassword($password, $saltString);
+			if ($dbPassword == $saltedPassword) {
+				return true;
+			}
+		}
+
+		function findSaltedUser(&$Model, $data = array()) {
+			if (!empty($data)) {
 				extract($this->settings[$Model->alias]);
 
 				$db =& $Model->getDataSource();
-				$passwordExpression = $db->expression(sprintf('SHA1(CONCAT(%s, %s))',
-					$db->value($fields[$Model->alias.'.'.$password]),
-					$db->name($field)
-				));
-
-				$user_id = $Model->find('first', array(
+				$user = $Model->find('first', array(
 						'conditions' => array(
-							$Model->alias.'.'.$username => $fields[$Model->alias.'.'.$username],
-							$Model->alias.'.'.$password => $passwordExpression
+							$Model->alias.'.'.$username => $data[$Model->alias.'.'.$username],
 						),
 						'fields' => array(
-							'id'
+							'id',
+							$db->name($password),
+							$db->name($field),
 						),
 						'recursive' => -1,
 						'avoidRecursion' => true
 					)
 				);
 
-				if (!empty($user_id)) {
-					$fields[$Model->alias.'.id'] = $user_id[$Model->alias]['id'];
-					unset($fields[$Model->alias.'.'.$password], $fields[$Model->alias.'.'.$username]);
+				if ($this->testSaltedUser($data[$Model->alias.'.'.$password], $user[$Model->alias][$field], $user[$Model->alias][$password])) {
+					$data[$Model->alias.'.'.$Model->primaryKey] = $user[$Model->alias][$Model->primaryKey];
+					unset($data[$Model->alias.'.'.$password], $data[$Model->alias.'.'.$username]);
 				}
 			}
-			return $fields;
+			return $data;
 		}
 
 		function hashPasswords(&$data, $alias) {
