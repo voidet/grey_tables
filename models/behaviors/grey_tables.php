@@ -63,15 +63,14 @@
 			if (!empty($data)) {
 				extract($this->settings[$Model->alias]);
 
-				$db =& $Model->getDataSource();
 				$user = $Model->find('first', array(
 						'conditions' => array(
 							$Model->alias.'.'.$username => $data[$Model->alias.'.'.$username],
 						),
 						'fields' => array(
 							'id',
-							$db->name($password),
-							$db->name($field),
+							$Model->escapeField($password),
+							$Model->escapeField($field),
 						),
 						'recursive' => -1,
 						'avoidRecursion' => true
