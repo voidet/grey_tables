@@ -1,4 +1,4 @@
-#CakePHP Grey Tables Behavior
+#CakePHP Grey Tables Authenticate Object for CakePHP 2.0
 
 The purpose of this behavior is to add security on sensitive data stored within your auth tables. The idea behind Grey Tables is simply a row based salting of password strings, per user. If you are unfamiliar with Rainbow Tables I would recommend reading into what exactly they are over at [Wikipedia - Rainbow Tables](http://en.wikipedia.org/wiki/Rainbow_tables).
 
@@ -6,23 +6,13 @@ The purpose of this behavior is to add security on sensitive data stored within 
 Install the plugin:
 
 	cd myapp
-	git clone git://github.com/voidet/Grey-Tables.git grey_tables
+	git clone git://github.com/voidet/Grey-Tables.git app/Plugin/GreyTables
 
-Depending on which Auth user model you would like to include (i.e user, member, admin, customers), you will need to edit your model. To do so open your model file and include the behavior via:
+Next set up Grey Tables to act as your authenticate object by putting this in your beforeFilter:
 
-	var $actsAs = array('GreyTables.GreyTables');
-
-The next method is used by the Auth component to hash the passwords, which Grey Tables will provide a salt string along side with the posted data (including password):
-
-	class Member extends AppModel {
-
-		var $actsAs = array('GreyTables.GreyTables');
-
-		function hashPasswords($data) {
-			return $this->Behaviors->GreyTables->hashPasswords($data, $this->alias);
-		}
-
-	}
+$this->Auth->authenticate = array(
+  'GreyTables.GreyTables' => array('userModel' => 'User')
+);
 
 ##Logging In
 
