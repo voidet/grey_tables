@@ -15,7 +15,7 @@ class GreyTablesAuthenticate extends FormAuthenticate {
 		$this->Model = ClassRegistry::init($this->settings['userModel']);
 	}
 
-	function _findUser($usernameData, $passwordData) {
+	public function _findUser($usernameData, $passwordData) {
 		extract($this->settings);
 		$passwordData = $this->_password($passwordData);
 
@@ -43,27 +43,17 @@ class GreyTablesAuthenticate extends FormAuthenticate {
 		return $user[$this->Model->alias];
 	}
 
-	function beforeSave(&$Model) {
-		$data = &$Model->data[$Model->alias];
-		extract($this->settings[$Model->alias]);
-		if (!empty($data[$password])) {
-			$data[$field] = $this->generateSaltString();
-			$data[$password] = $this->generateSaltedPassword($data[$password], $data[$field]);
-		}
-		return parent::beforeSave($Model);
-	}
-
-	function generateSaltString() {
+	public function generateSaltString() {
 		return Security::hash(String::uuid(), null, true);
 	}
 
-	function generateSaltedPassword($password = '', $saltString) {
+	public function generateSaltedPassword($password = '', $saltString) {
 		if (!empty($password)) {
 			return Security::hash($password.$saltString, null, false);
 		}
 	}
 
-	function testSaltedUser($password = '', $saltString = '', $dbPassword = '') {
+	public function testSaltedUser($password = '', $saltString = '', $dbPassword = '') {
 		$saltedPassword = $this->generateSaltedPassword($password, $saltString);
 		if ($dbPassword == $saltedPassword) {
 			return true;
