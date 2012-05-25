@@ -23,10 +23,12 @@ class GreyTablesAuthenticate extends FormAuthenticate {
 				'conditions' => array(
 					$this->Model->alias.'.'.$fields['username'] => $usernameData
 				),
+				'fields' => array('*', 'password'),
 				'recursive' => $recursive,
 				'avoidRecursion' => true
 			)
 		);
+
 		if (empty($user) || empty($user[$this->Model->alias])) {
 			return false;
 		}
@@ -34,6 +36,8 @@ class GreyTablesAuthenticate extends FormAuthenticate {
 		$isValidUser = $this->testSaltedUser($passwordData, $user[$this->Model->alias][$saltField], $user[$this->Model->alias][$fields['password']]);
 		if ($isValidUser) {
 			unset($user[$this->Model->alias][$fields['password']]);
+		} else {
+			return false;
 		}
 
 		return $user[$this->Model->alias];
